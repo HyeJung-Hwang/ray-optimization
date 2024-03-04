@@ -20,51 +20,26 @@ from ray.data._internal.logical.optimizers import LogicalOptimizer,DEFAULT_PHYSI
 from add_user_rule import add_user_provided_physical_rules
 from ray.data._internal.planner.planner import Planner
 
-from preprocess import NormalizeTransform, RandomHorizontalFlipTransform, ResizeTransform, ToTensorTransform
-
-def increase_brightness(image_numpy_array: np.ndarray) -> np.ndarray:
-    return np.clip(image_numpy_array + 50, 0, 255).astype(np.uint8)
+from preprocess import to_tensor_transform,resize_transform,normalize_transform,random_horizontal_flip_transform
 
 
 if __name__ == "__main__":
 
     path = r"./chest_xray/test/NORMAL"
     ds = ray.data.read_images(path) \
-        .map_batches(ToTensorTransform,concurrency=1) \
-        .map_batches(ResizeTransform(256)) \
-        .map_batches(NormalizeTransform(0.5,0.5)) \
-        .map_batches(RandomHorizontalFlipTransform()) 
+        .map_batches(to_tensor_transform) \
+        .map_batches(resize_transform) \
+        .map_batches(normalize_transform) \
+        .map_batches(random_horizontal_flip_transform) 
         
     
     plan = ds._logical_plan
-    print(plan.dag)
+    print(f"Logical Plan \n -> {plan.dag}\n")
     optimized_logical_plan = LogicalOptimizer().optimize(plan)
+    print(f"Optimized Logical Plan \n -> {optimized_logical_plan.dag}\n")
     physical_plan = Planner().plan(optimized_logical_plan)
-    # 4개 다 실행하는 지?
-    print(physical_plan.dag)
-    print()
+    print(f"Physical Plan \n -> {physical_plan.dag}\n")
     optimized_physical_plan = PhysicalOptimizer().optimize(physical_plan)
-    print(optimized_physical_plan._dag)
-    print()
-   # print(optimized_physical_plan._op_map)
+    print(f"Optimized Physical Plan \n -> {optimized_physical_plan._dag}\n")
 
-
-
-
-    # inverse_order = iter([Read, AbstractUDFMap, RandomizeBlocks])
-    # for node in optimized_plan.dag.post_order_iter():
-    #     print(node)
-    #     assert isinstance(node, next(inverse_order))
-
-    # ds = (
-    #     ray.data.range(10)
-    #     .randomize_block_order()
-    #     .repartition(10)
-    #     .map_batches(dummy_map)
-    # )
-    # plan = ds._logical_plan
-    # optimized_plan = LogicalOptimizer().optimize(plan)
-
-    # inverse_order = iter([Read, RandomizeBlocks, Repartition, AbstractUDFMap])
-    # for node in optimized_plan.dag.post_order_iter():
-    #     assert isinstance(node, next(inverse_order))
+   
