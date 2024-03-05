@@ -10,6 +10,7 @@ if __name__ == "__main__":
     path = r"./chest_xray/test/NORMAL"
 
     ds = ray.data.read_images(path) \
+        .randomize_block_order() \
         .map_batches(to_tensor_transform) \
         .map_batches(resize_transform) \
         .map_batches(normalize_transform) \
@@ -24,7 +25,7 @@ if __name__ == "__main__":
 
     physical_plan = Planner().plan(optimized_logical_plan)
     print(f"Physical Plan \n -> {physical_plan.dag}\n")
-    
+
     optimized_physical_plan = PhysicalOptimizer().optimize(physical_plan)
     print(f"Optimized Physical Plan \n -> {optimized_physical_plan._dag}\n")
 
