@@ -11,6 +11,7 @@ if __name__ == "__main__":
 
     ds = ray.data.read_images(path) \
         .randomize_block_order() \
+        .randomize_block_order() \
         .map_batches(to_tensor_transform) \
         .map_batches(resize_transform) \
         .map_batches(normalize_transform) \
